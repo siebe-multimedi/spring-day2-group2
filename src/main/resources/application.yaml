@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:day2;DB_CLOSE_DELAY=-1
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+
+logging:
+  level:
+    # shows when a transaction is created, joined, suspended, committed or rolled back
+    org.springframework.orm.jpa.JpaTransactionManager: DEBUG
