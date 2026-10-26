@@ -1,6 +1,7 @@
 package com.example.day2.transactions;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -19,7 +20,11 @@ public class AuditService {
         this.failing = failing;
     }
 
-    @Transactional
+    /**
+     * Step 3 and 4: REQUIRES_NEW. The audit entry commits (or fails) in a transaction of its own,
+     * so it survives a rollback of the order, and a failing audit does not doom the order.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void log(String message) {
         audits.save(new AuditEntry(message));
         if (failing) {
@@ -27,8 +32,8 @@ public class AuditService {
         }
     }
 
-    /** Bonus: this method should only ever run inside an existing transaction. */
-    @Transactional
+    /** Bonus: MANDATORY. Without an existing transaction this method refuses to run. */
+    @Transactional(propagation = Propagation.MANDATORY)
     public void logInExistingTransaction(String message) {
         audits.save(new AuditEntry(message));
     }

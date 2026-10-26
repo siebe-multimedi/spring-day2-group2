@@ -31,8 +31,7 @@ class PersistenceBonusTest {
         Customer detached = service.load(annId);
         detached.setName("Changed");
 
-        // TODO bonus: make this change reach the database, with ONE repository call.
-        //             Which SQL do you see in the console?
+        repository.save(detached);   // merge: Hibernate selects the row first, then updates it
 
         assertThat(service.load(annId).getName()).isEqualTo("Changed");
     }

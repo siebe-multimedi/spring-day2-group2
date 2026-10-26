@@ -16,13 +16,14 @@ public class CustomerService {
         this.repository = repository;
     }
 
-    /** Step 1: change the name of a customer, WITHOUT calling save(). */
+    /** Step 1: dirty checking. The customer is managed, so the change is written at commit. No save() needed. */
     @Transactional
     public void rename(Long id, String newName) {
-        // TODO step 1: load the customer and change its name. Do NOT call save().
+        Customer customer = repository.findById(id).orElseThrow();
+        customer.setName(newName);
     }
 
-    /** Step 2: this method has no @Transactional, and the test that calls it has none either. */
+    /** Step 2: no @Transactional: the entity that is returned is detached. */
     public Customer load(Long id) {
         return repository.findById(id).orElseThrow();
     }
@@ -32,7 +33,11 @@ public class CustomerService {
     public void changeEmail(Long id, String email) {
         lastCallCaughtInside = false;
         try {
-            // TODO step 3: load the customer and give it the new email
+            Customer customer = repository.findById(id).orElseThrow();
+            customer.setEmail(email);
+            // First run: without the next line the UPDATE only runs at commit, outside this try block.
+            // Second run: with the flush the UPDATE runs here, and the catch block is reached.
+            repository.flush();
         } catch (DataIntegrityViolationException e) {
             lastCallCaughtInside = true;
             System.out.println("[persistence] step 3: the exception was caught INSIDE changeEmail()");

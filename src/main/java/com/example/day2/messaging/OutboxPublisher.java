@@ -16,9 +16,15 @@ public class OutboxPublisher {
 
     /** In a real application this method runs on a schedule (@Scheduled). Here the tests call it. */
     public void publishPending() {
-        // TODO step 4: send every unsent OutboxMessage (outbox.findUnsent()),
-        //              and mark each one as sent (outbox.markSent(id)) after it was sent.
-        //              If the broker is down, it throws a BrokerUnavailableException:
-        //              catch it, and leave the message in the outbox.
+        // No @Transactional on this method: a remote call does not belong inside a transaction.
+        for (OutboxMessage message : outbox.findUnsent()) {
+            try {
+                broker.send(message.getQueue(), message.getPayload());
+            } catch (BrokerUnavailableException e) {
+                System.out.println("[messaging] the broker is down: the message stays in the outbox");
+                return;
+            }
+            outbox.markSent(message.getId());   // its own, short transaction
+        }
     }
 }

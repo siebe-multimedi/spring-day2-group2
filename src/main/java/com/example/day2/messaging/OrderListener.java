@@ -3,7 +3,7 @@ package com.example.day2.messaging;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Bonus: the consumer of the messages. */
+/** Bonus: an idempotent consumer. */
 @Component
 public class OrderListener {
 
@@ -18,7 +18,12 @@ public class OrderListener {
     /** In a real application this is a message listener (with Spring AMQP: @RabbitListener). */
     @Transactional
     public void handle(String messageId, Long orderId) {
-        // TODO bonus: ignore a message that was handled before (see ProcessedMessage)
+        if (processed.existsById(messageId)) {
+            System.out.println("[messaging] duplicate message " + messageId + " ignored");
+            return;
+        }
         warehouse.reserve(orderId);
+        // The id is the primary key: if two copies arrive at the same moment, the second insert fails.
+        processed.save(new ProcessedMessage(messageId));
     }
 }
